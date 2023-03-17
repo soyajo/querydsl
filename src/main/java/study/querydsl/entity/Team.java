@@ -16,7 +16,6 @@ import java.util.List;
 @ToString(of = {"id","name"})
 public class Team {
 
-
     @Id
     @GeneratedValue
     private Long id;
