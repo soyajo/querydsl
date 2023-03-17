@@ -97,7 +97,7 @@ public class QuertdslBasicTest {
     }
 
     @Test
-    public void search() throws Exception {
+    public void search() {
         // when - 로직실행
         Member findMember = queryFactory
                 .selectFrom(member)
@@ -111,10 +111,10 @@ public class QuertdslBasicTest {
 
     /**
      * 위 search 메서드 보다 동적 쿼리 짜기 좋은 querydsl
-     * @throws Exception
+     *
      */
     @Test
-    public void searchAndParam() throws Exception {
+    public void searchAndParam() {
         // when - 로직실행
         Member findMember = queryFactory
                 .selectFrom(member)
@@ -129,7 +129,7 @@ public class QuertdslBasicTest {
     }
 
     @Test
-    public void resultFetch() throws Exception {
+    public void resultFetch() {
         // given - 설정
         List<Member> fetch = queryFactory
                 .selectFrom(member)
@@ -170,7 +170,7 @@ public class QuertdslBasicTest {
      *
      */
     @Test
-    public void sort() throws Exception {
+    public void sort() {
         em.persist(new Member(null,100));
         em.persist(new Member("member5",100));
         em.persist(new Member("member6",100));
@@ -197,7 +197,7 @@ public class QuertdslBasicTest {
     }
 
     @Test
-    public void paging() throws Exception {
+    public void paging() {
 
         QueryResults<Member> queryResults = queryFactory
                 .selectFrom(member)
@@ -237,10 +237,10 @@ public class QuertdslBasicTest {
 
     /**
      * 팀의 이름과 각 팀의 평균 연령을 구해라.
-     * @throws Exception
+     *
      */
     @Test
-    public void group() throws Exception {
+    public void group() {
 
         List<Tuple> result = queryFactory
                 .select(team.name, member.age.avg())
@@ -258,6 +258,89 @@ public class QuertdslBasicTest {
         assertThat(teamB.get(team.name)).isEqualTo("teamB");
         assertThat(teamB.get(member.age.avg())).isEqualTo(35); // (30 + 40) / 2
 
+    }
+
+    /**
+     * 팀 A에 소속된 모든 회원
+     *
+     */
+    @Test
+    public void join() {
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .leftJoin(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        assertThat(result)
+                .extracting("username")
+                .containsExactly("member1", "member2");
+    }
+
+    /**
+     * 세타 조인
+     * 회원의 이름이 팀 이름과 같은 회원 조회
+     *
+     * 외부 조인이 불가능 -> 다음에 설명할 조인 on을 사용하면 외부 조인 가능
+     */
+    @Test
+    public void theta_join() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+
+        List<Member> fetch = queryFactory
+                .select(member)
+                .from(member, team)
+                .where(member.username.eq(team.name))
+                .fetch();
+
+        assertThat(fetch)
+                .extracting("username")
+                .containsExactly("teamA", "teamB");
+    }
+
+    /**
+     * join on 절
+     * ex ) 회원과 팀을 조인하면서, 팀 이름이 teamA인 팀만 조인, 회원은 모두 조회
+     * jpql = select m from Member m left join team t on t.name = 'teamA'
+     */
+    @Test
+    public void joinOnFiltering() {
+
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team)
+                .on(team.name.eq("teamA")) // 외부조인이면 on
+//                .where(team.name.eq("teamA")) // 내부조인이면 where
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+    /**
+     * 연관관계가 없는 엔티티 외부 조인
+     * 예 ) 회원의 이름과 팀의 이름이 같은 대상 외부 조인
+     *
+     */
+    @Test
+    public void join_on_no_relation() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(team)
+                .on(member.username.eq(team.name))
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
     }
 
 }
