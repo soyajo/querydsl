@@ -25,6 +25,7 @@ import javax.persistence.PersistenceUnit;
 import java.util.Collections;
 import java.util.List;
 
+import static com.querydsl.jpa.JPAExpressions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static study.querydsl.entity.QMember.member;
@@ -392,8 +393,7 @@ public class QuertdslBasicTest {
         List<Member> result = queryFactory
                 .selectFrom(member)
                 .where(member.age.eq(
-                        JPAExpressions
-                                .select(memberSub.age.max())
+                        select(memberSub.age.max())
                                 .from(memberSub)
                 ))
                 .fetch();
@@ -402,5 +402,68 @@ public class QuertdslBasicTest {
                 .containsExactly(40);
     }
 
+
+    /**
+     * 나이가 평균 이상인 회원
+     * @throws Exception
+     */
+    @Test
+    public void subQueryGoe() throws Exception {
+
+        QMember memberSub = new QMember("memberSub");
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.goe(
+                        select(memberSub.age.avg())
+                                .from(memberSub)
+                ))
+                .fetch();
+
+        assertThat(result).extracting("age")
+                .containsExactly(30,40);
+    }
+
+    /**
+     * 나이가 10살 이상인 회원
+     * @throws Exception
+     */
+    @Test
+    public void subQueryIn() throws Exception {
+
+        QMember memberSub = new QMember("memberSub");
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.in(
+                        select(memberSub.age)
+                                .from(memberSub)
+                                .where(memberSub.age.gt(10))
+                ))
+                .fetch();
+
+        assertThat(result).extracting("age")
+                .containsExactly(20, 30,40);
+    }
+    /**
+     *
+     * @throws Exception
+     */
+    @Test
+    public void selectSubQuery() throws Exception {
+
+        QMember memberSub = new QMember("memberSub");
+
+        List<Tuple> result = queryFactory
+                .select(member.username
+                        , select(memberSub.age.avg())
+                                .from(memberSub))
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
 
 }
