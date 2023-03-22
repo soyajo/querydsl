@@ -2,7 +2,11 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -12,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.QMemberDto;
+import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 
 import study.querydsl.entity.QMember;
@@ -384,10 +391,10 @@ public class QuertdslBasicTest {
 
     /**
      * 나이가 가장 많은 회원 조회
-     * @throws Exception
+     * @
      */
     @Test
-    public void subQuery() throws Exception {
+    public void subQuery()  {
 
         QMember memberSub = new QMember("memberSub");
 
@@ -406,10 +413,10 @@ public class QuertdslBasicTest {
 
     /**
      * 나이가 평균 이상인 회원
-     * @throws Exception
+     * @
      */
     @Test
-    public void subQueryGoe() throws Exception {
+    public void subQueryGoe()  {
 
         QMember memberSub = new QMember("memberSub");
 
@@ -427,10 +434,10 @@ public class QuertdslBasicTest {
 
     /**
      * 나이가 10살 이상인 회원
-     * @throws Exception
+     * @
      */
     @Test
-    public void subQueryIn() throws Exception {
+    public void subQueryIn()  {
 
         QMember memberSub = new QMember("memberSub");
 
@@ -453,7 +460,7 @@ public class QuertdslBasicTest {
      * nativeSQL 을 사용해야함.
      */
     @Test
-    public void selectSubQuery() throws Exception {
+    public void selectSubQuery()  {
 
         QMember memberSub = new QMember("memberSub");
 
@@ -471,10 +478,10 @@ public class QuertdslBasicTest {
 
     /**
      * case 문
-     * @throws Exception
+     * @
      */
     @Test
-    public void basicCase() throws Exception {
+    public void basicCase()  {
 
         List<String> result = queryFactory
                 .select(member.age
@@ -495,10 +502,10 @@ public class QuertdslBasicTest {
      * 디비 데이터는 최소한의 필터링을 사용해야한다.
      * 많이 사용하면 안됨.
      * 애플리케이션에서 필터해야함.
-     * @throws Exception
+     * @
      */
     @Test
-    public void complexCase() throws Exception {
+    public void complexCase()  {
         List<String> result = queryFactory
                 .select(
                         new CaseBuilder()
@@ -512,5 +519,179 @@ public class QuertdslBasicTest {
             System.out.println("s = " + s);
         }
     }
+
+    @Test
+    public void constant()  {
+        List<Tuple> a = queryFactory
+                .select(member.username, Expressions.constant("A"))
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : a) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+    @Test
+    public void concat() {
+        // username_age
+        List<String> fetch = queryFactory
+                .select(member.username.concat("_").concat(member.age.stringValue()))
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetch();
+
+        for (String s : fetch) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    @Test
+    public void simpleProjection() {
+        List<String> fetch = queryFactory
+                .select(member.username)
+                .from(member)
+                .fetch();
+
+        for (String s : fetch) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    @Test
+    public void tupleProjection() {
+        List<Tuple> fetch = queryFactory
+                .select(member.username, member.age)
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : fetch) {
+            String s = tuple.get(member.username);
+            System.out.println("s = " + s);
+            Integer integer = tuple.get(member.age);
+            System.out.println("integer = " + integer);
+        }
+    }
+
+    /**
+     * dto의 package이름을 다 적어줘야해서 지저분함.
+     * 순수 jpa에서 dto를 조회할 때는 new 명령어를 사용해야함.
+     * 생성자 방식만 지원함.
+     */
+    @Test
+    public void findDtoByJPQL() {
+        List<MemberDto> resultList1 = em.createQuery("select new study.querydsl.dto.MemberDto(m.username, m.age) from Member m", MemberDto.class)
+                .getResultList();
+        for (MemberDto memberDto : resultList1) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+
+    /**
+     * getter, setter 사용
+     */
+    @Test
+    public void findDtoByQuerydsl()  {
+        List<MemberDto> fetch = queryFactory
+                .select(Projections.bean(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+        for (MemberDto memberDto : fetch) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * 필드에 바로 들어감
+     */
+    @Test
+    public void findDtoByField()  {
+        List<MemberDto> fetch = queryFactory
+                .select(Projections.fields(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+        for (MemberDto memberDto : fetch) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * 생성자 방식
+     */
+    @Test
+    public void findDtoByConstructor()  {
+        List<MemberDto> fetch = queryFactory
+                .select(Projections.constructor(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+        for (MemberDto memberDto : fetch) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * 필드명이 다를 때 해결방안
+     */
+    @Test
+    public void findUserDto()  {
+        QMember memberSub = new QMember("memberSub");
+        List<UserDto> fetch = queryFactory
+                .select(Projections.fields(UserDto.class,
+                        member.username.as("name"),
+
+                        ExpressionUtils.as(JPAExpressions
+                                .select(memberSub.age.max())
+                                .from(memberSub), "age"
+                            )
+                        )
+                )
+                .from(member)
+                .fetch();
+
+        for (UserDto userDto : fetch) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+
+    /**
+     * 생성자 projection
+     */
+    @Test
+    public void findUserDtoByConstructor()  {
+        List<UserDto> fetch = queryFactory
+                .select(Projections.constructor(UserDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+        for (UserDto userDto : fetch) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+
+    /**
+     * @QueryProjection
+     * entity 생성자에 @QueryProjection 작성
+     * 아키텍쳐 부분에서 문제가 있음.
+     *
+     */
+    @Test
+    public void findDtoByQueryProjection(){
+        List<MemberDto> fetch = queryFactory
+                .select(new QMemberDto(member.username, member.age))
+                .from(member)
+                .fetch();
+        for (MemberDto memberDto : fetch) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
 
 }
