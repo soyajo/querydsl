@@ -2,6 +2,7 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -468,5 +469,48 @@ public class QuertdslBasicTest {
         }
     }
 
+    /**
+     * case 문
+     * @throws Exception
+     */
+    @Test
+    public void basicCase() throws Exception {
+
+        List<String> result = queryFactory
+                .select(member.age
+                        .when(10).then("열살")
+                        .when(20).then("스무살")
+                        .otherwise("기타")
+                ).from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    /**
+     * 복잡한 case 문 처리
+     *
+     * 디비 데이터는 최소한의 필터링을 사용해야한다.
+     * 많이 사용하면 안됨.
+     * 애플리케이션에서 필터해야함.
+     * @throws Exception
+     */
+    @Test
+    public void complexCase() throws Exception {
+        List<String> result = queryFactory
+                .select(
+                        new CaseBuilder()
+                                .when(member.age.between(0, 20)).then("0~20살")
+                                .when(member.age.between(21, 30)).then("21~30살")
+                                .otherwise("기타")
+                )
+                .from(member)
+                .fetch();
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
 
 }
