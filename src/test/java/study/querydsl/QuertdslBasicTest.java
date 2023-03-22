@@ -446,8 +446,10 @@ public class QuertdslBasicTest {
                 .containsExactly(20, 30,40);
     }
     /**
-     *
-     * @throws Exception
+     * 서브쿼리는 from 절 서브쿼리 안됌.
+     * 서브쿼리를 join 으로 변경한다.
+     * 애플리케이션에서 쿼리를 2번 분리해서 실행한다.
+     * nativeSQL 을 사용해야함.
      */
     @Test
     public void selectSubQuery() throws Exception {
@@ -465,5 +467,6 @@ public class QuertdslBasicTest {
             System.out.println("tuple = " + tuple);
         }
     }
+
 
 }
