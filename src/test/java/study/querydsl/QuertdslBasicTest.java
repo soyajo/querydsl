@@ -766,4 +766,72 @@ public class QuertdslBasicTest {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
 
+    /**
+     * 벌크연산 처리 - 수정
+     * 조회했을 때 db 보다 영속성 컨테스트가 우선이 됨.
+     */
+    @Test
+    public void bulkUpdate() {
+
+        //member1 = 10 -> 유지
+        //member2 = 20 -> 유지
+        //member3 = 30 -> 유지
+        //member4 = 40 -> 유지
+
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        //member1 = 10 -> 비회원
+        //member2 = 20 -> 비회원
+        //member3 = 30 -> 유지
+        //member4 = 40 -> 유지
+
+        //영속성 컨텍스트
+        //member1 = 10 -> 유지
+        //member2 = 20 -> 유지
+        //member3 = 30 -> 유지
+        //member4 = 40 -> 유지
+
+
+        // 업데이트한 리스트를 조회하려면 영속성컨텍스트 초기화를 해야한다.
+        em.flush();
+        em.clear();
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        //member1 = 10 -> 유지
+        //member2 = 20 -> 유지
+        //member3 = 30 -> 유지
+        //member4 = 40 -> 유지
+        for (Member member1 : result) {
+            System.out.println("member1 = " + member1);
+        }
+    }
+
+    /**
+     * 벌크연산 - 곱하기
+     */
+    @Test
+    public void bulkMultiply() {
+        queryFactory
+                .update(member)
+                .set(member.age, member.age.multiply(2))
+                .execute();
+    }
+
+    /**
+     * 벌크연산 - 삭제
+     */
+    @Test
+    public void bulkDelete() {
+        queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
 }
