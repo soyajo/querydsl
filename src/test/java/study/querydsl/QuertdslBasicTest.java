@@ -867,7 +867,6 @@ public class QuertdslBasicTest {
         for (String s : result) {
             System.out.println("s = " + s);
         }
-
     }
 
 }
