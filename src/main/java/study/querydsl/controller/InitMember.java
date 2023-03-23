@@ -39,7 +39,6 @@ public class InitMember {
                 Team selectedTeam = i % 2 == 0 ? teamA : teamB;
                 em.persist(new Member("member"+i, i, selectedTeam));
             }
-
         }
     }
 }
