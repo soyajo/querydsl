@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 import org.springframework.data.support.PageableExecutionUtils;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
@@ -25,6 +26,10 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
 
     private final JPAQueryFactory queryFactory;
 
+//    public MemberRepositoryImpl() {
+//        super(member.getClass());
+//    }
+
 
     /**
      * where 절 파라미터 사용 동적 쿼리
@@ -33,6 +38,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
      * @return
      */
     public List<MemberTeamDto> search(MemberSearchCondition condition) {
+
         return queryFactory
                 .select(new QMemberTeamDto(
                         member.id.as("memberId"),

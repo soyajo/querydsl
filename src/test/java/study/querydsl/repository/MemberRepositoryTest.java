@@ -104,6 +104,7 @@ class MemberRepositoryTest {
      * join x
      * 복잡한 실무환경에서 사용하기에는 한계가 명확하다.
      * 사용 x
+     * 단순한 곳에는 사용해도 됨.
      */
     @Test
     public void querydslPredicateExecutorTest() {
@@ -115,4 +116,8 @@ class MemberRepositoryTest {
             System.out.println("member1 = " + member1);
         }
     }
+
+    
+
+
 }
