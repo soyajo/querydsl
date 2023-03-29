@@ -100,7 +100,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                 .leftJoin(member.team, team)
                 .where(
                         usernameEq(condition.getUsername()),
-                        teamNameEq(condition.getTeamName()),
+                teamNameEq(condition.getTeamName()),
                         ageGoe(condition.getAgeGoe()),
                         ageLoe(condition.getAgeLoe())
                 )
